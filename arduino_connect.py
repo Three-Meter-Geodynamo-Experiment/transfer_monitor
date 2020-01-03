@@ -1,7 +1,6 @@
 import pyfirmata
 import time
 
-global board, it, V0, V1, V2
 board = pyfirmata.Arduino('/dev/tty.usbmodem14201')
 
 it = pyfirmata.util.Iterator(board)
@@ -12,19 +11,13 @@ V1 = board.get_pin('a:1:i')
 V2 = board.get_pin('a:2:i')
 
 
-def adruino_temperatures():
-    global board, it, V0, V1, V2
+def arduino_temperatures():
     try:
         board.digital[13].write(1)
     except:
-        board = pyfirmata.Arduino('/dev/tty.usbmodem14201')
-
-        it = pyfirmata.util.Iterator(board)
-        it.start()
-
-        V0 = board.get_pin('a:0:i')
-        V1 = board.get_pin('a:1:i')
-        V2 = board.get_pin('a:2:i')
+        import arduino_connect
+        # time.sleep(1)
+        return [0, 0, 0]
 
     analog_value = V0.read()
     analog_value2 = V1.read()
@@ -37,9 +30,9 @@ def adruino_temperatures():
         return [T1, T2, T3]
     else:
         time.sleep(1)
-        return adruino_temperatures()
+        return arduino_temperatures()
 
 
 if __name__ == '__main__':
-    print(adruino_temperatures())
+    print(arduino_temperatures())
 
