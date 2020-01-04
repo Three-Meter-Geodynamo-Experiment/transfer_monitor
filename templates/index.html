@@ -75,11 +75,10 @@
         <title>{{ title }} - Sodium transfer monitor</title>
     </head>
     <body>
-        <h1>Adruino temperatures, {{ user.adr_temp }}!</h1>
-        <h1>Wireless temperatures, {{ user.wrl_temp }}!</h1>
+        <h3>Adruino temperatures, {{ user.adr_temp }}</h3>
+        <h3>Wireless temperatures, {{ user.wrl_temp }}</h3>
         <div class="container">
             <img src="static/sodium_transfer.png" alt="Na"  style="width:1368;">
-
             <div class="temperature1">T1={{ temperatures.T1}} </div>
             <div class="temperature2">T2={{ temperatures.T2}}</div>
             <div class="temperature3">T3={{ temperatures.T3}}</div>

@@ -1,20 +1,5 @@
-global s
-s = 'global'
-print(s)
-
-
-def foo2():
-    print(s)
-
-
-def foo():
-    global s
-    s = 'local'
-    print(s)
-
-
-foo2()
-
-foo()
-print(s)
-
+import logging
+logging.basicConfig(filename='example.log',level=logging.DEBUG)
+logging.debug('This message should go to the log file')
+logging.info('So should this')
+logging.warning('And this, too')

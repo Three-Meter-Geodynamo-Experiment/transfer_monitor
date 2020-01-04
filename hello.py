@@ -1,23 +1,48 @@
 from flask import Flask, render_template
-import importlib
 import arduino_connect
 import wireless_temp_connect
+import datetime
+import os.path
+import time
+import multiprocessing
+
+
+def write_log_file():
+    print('Starting writing log file')
+    # time.sleep(10)
+    today = (datetime.date.today())
+    file_location = "logs/temp" + str(today) + ".log"
+    if not os.path.isfile(file_location):
+        print('does not exist, creating it')
+        log_file = open(file_location, "w+")
+    else:
+        log_file = open(file_location, "a")
+
+    while True:
+        now = datetime.datetime.now()
+        seconds_since_midnight = (now - now.replace(hour=0, minute=0, second=0)).total_seconds()
+
+
+        arduino_temp = (arduino_connect.arduino_temperatures())
+
+        wireless_temp = (wireless_temp_connect.wireless_temp_timed())
+
+        d = str(seconds_since_midnight) + ' ' + str(arduino_temp).replace(',', '').replace('[', '').replace(']', '') + ' ' + str(wireless_temp).replace(',', '').replace('[', '').replace(']', '')
+        log_file.write(d.replace(' ', '\t') + '\n')
+        # print(d)
+        time.sleep(2)
+
+    log_file.close()
+
 
 app = Flask(__name__, static_url_path='/static')
-global old_arduino_temp 
-old_arduino_temp = []
 
 
 @app.route("/")
 def index():
-    global old_arduino_temp
+
     arduino_temp = (arduino_connect.arduino_temperatures())
-    # if old_arduino_temp == arduino_temp:
-    #     print('The same values of arduino temperatures detected, trying to connect again in a sec')
-    #     importlib.reload(arduino_temp)
-    # else:
-    #     old_arduino_temp = arduino_temp
-        
+
     wireless_temp = (wireless_temp_connect.wireless_temp_timed())
     # print(wireless_temp)
     adr_t1 = arduino_temp[0]
@@ -39,5 +64,24 @@ def index():
     return render_template('index.html', title='Home', user=user, temperatures=temperatures, pressures=pressures)
 
 
-if __name__ == "__main__":
+@app.route("/input")
+def input():
+    return render_template('input.html', title='Input')
+
+
+def run_the_app():
     app.run('0.0.0.0')
+
+
+if __name__ == "__main__":
+    # defining the app using mp
+    p2 = multiprocessing.Process(target=run_the_app)
+    # defining writing log files using mp
+    p3 = multiprocessing.Process(target=write_log_file)
+    #  starting both processes
+    p3.start()
+    p2.start()
+
+    # this one is unreachable, sorry
+    p2.join()
+    p3.join()
