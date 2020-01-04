@@ -52,7 +52,7 @@ def wireless_temp(wrls_temp_array=wrls_temp_array):
 def wireless_temp_timed():
     p = multiprocessing.Process(target=wireless_temp, name="Thread1", args=(wrls_temp_array,))
     p.start()
-    p.join(1)
+    p.join(5)
     if p.is_alive():
         print('Wireless Temp Response Max Time Reached')
         # tn = telnetlib.Telnet(HOST, PORT)

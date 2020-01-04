@@ -1,39 +1,14 @@
 from flask import Flask, render_template
-import arduino_connect
-import wireless_temp_connect
+
 import datetime
-import os.path
 import time
 import multiprocessing
+import arduino_connect
+import wireless_temp_connect
+import logging
 
 
-def write_log_file():
-    print('Starting writing log file')
-    # time.sleep(10)
-    today = (datetime.date.today())
-    file_location = "logs/temp" + str(today) + ".log"
-    if not os.path.isfile(file_location):
-        print('does not exist, creating it')
-        log_file = open(file_location, "w+")
-    else:
-        log_file = open(file_location, "a")
-
-    while True:
-        now = datetime.datetime.now()
-        seconds_since_midnight = (now - now.replace(hour=0, minute=0, second=0)).total_seconds()
-
-
-        arduino_temp = (arduino_connect.arduino_temperatures())
-
-        wireless_temp = (wireless_temp_connect.wireless_temp_timed())
-
-        d = str(seconds_since_midnight) + ' ' + str(arduino_temp).replace(',', '').replace('[', '').replace(']', '') + ' ' + str(wireless_temp).replace(',', '').replace('[', '').replace(']', '')
-        log_file.write(d.replace(' ', '\t') + '\n')
-        # print(d)
-        time.sleep(2)
-
-    log_file.close()
-
+data_temp_pressure_array = multiprocessing.Array('d', 12*[-2])
 
 app = Flask(__name__, static_url_path='/static')
 
@@ -41,9 +16,10 @@ app = Flask(__name__, static_url_path='/static')
 @app.route("/")
 def index():
 
-    arduino_temp = (arduino_connect.arduino_temperatures())
+    arduino_temp = data_temp_pressure_array[0:4]
 
-    wireless_temp = (wireless_temp_connect.wireless_temp_timed())
+    wireless_temp = data_temp_pressure_array[8:12]
+
     # print(wireless_temp)
     adr_t1 = arduino_temp[0]
     adr_t2 = arduino_temp[1]
@@ -73,15 +49,46 @@ def run_the_app():
     app.run('0.0.0.0')
 
 
-if __name__ == "__main__":
-    # defining the app using mp
-    p2 = multiprocessing.Process(target=run_the_app)
-    # defining writing log files using mp
-    p3 = multiprocessing.Process(target=write_log_file)
-    #  starting both processes
-    p3.start()
-    p2.start()
+def data_gathering(data_temp_pressure_array=data_temp_pressure_array):
+    while True:
+        data_temp_pressure_array[0:4] = arduino_connect.arduino_temperatures()
+        data_temp_pressure_array[8:12] = wireless_temp_connect.wireless_temp_timed()
+        time.sleep(1)
 
-    # this one is unreachable, sorry
-    p2.join()
-    p3.join()
+
+def writing_data_log(data_temp_pressure_array=data_temp_pressure_array):
+    while True:
+        data = str(data_temp_pressure_array[:]).replace('[', '').replace(']', '').replace(',', '').replace(' ', '\t')
+        now = datetime.datetime.now()
+        ssm = str((now - now.replace(hour=0, minute=0, second=0)).total_seconds())
+        logging.info(ssm + '\t' + data)
+        time.sleep(1)
+
+
+if __name__ == "__main__":
+    # process for gathering data
+    data_gatherer = multiprocessing.Process(target=data_gathering, args=(data_temp_pressure_array,))
+    # defining the app using mp
+    app_run = multiprocessing.Process(target=run_the_app)
+
+    app_run.start()
+    data_gatherer.start()
+
+    #  THIS PART IS FOR STARTING LOGGER
+    today = str(datetime.date.today())
+    today = today[5:7] + today[8:10] + today[2:4]
+    file_name = "logs/pr_temp_" + str(today) + '.log'
+    logging.basicConfig(filename=file_name, level=logging.DEBUG, format='%(message)s')
+
+    now = datetime.datetime.now()
+    ssm = (now - now.replace(hour=0, minute=0, second=0)).total_seconds()
+
+    logging.info(str(ssm) + '\tStarted the monitoring app')
+
+    log_process = multiprocessing.Process(target=writing_data_log, args=(data_temp_pressure_array,))
+    log_process.start()
+    #  this area is unreachable
+
+    app_run.join()
+    data_gatherer.join()
+    log_process.join()
