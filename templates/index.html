@@ -73,10 +73,17 @@
         </style>
     <head>
         <title>{{ title }} - Sodium transfer monitor</title>
+        <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
     </head>
     <body>
-        <h3>Adruino temperatures, {{ user.adr_temp }}</h3>
+        <h3>Arduino 1 temperatures, {{ user.ard_temp }}</h3>
+        <h3>Arduino 2 pressures, {{ user.ard2_pres }}</h3>
         <h3>Wireless temperatures, {{ user.wrl_temp }}</h3>
+        <h3>Current time: {{ time_data.current_time }}, Time since started: {{time_data.since_started }}</h3>
+        <h3> Pressure drop: {{pressures.P1 - pressures.P3}}</h3>
+        <h3> {{progress}}</h3>
+        <h3> {{time_data}} </h3>
         <div class="container">
             <img src="static/sodium_transfer.png" alt="Na"  style="width:1368;">
             <div class="temperature1">T1={{ temperatures.T1}} </div>
@@ -94,4 +101,6 @@
 
         </div>
     </body>
+
+
 </html>
