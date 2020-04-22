@@ -6,6 +6,14 @@
           text-align: left;
           color: black;
           font-size: 60;
+          top: 0;
+          left: 0;
+        }
+
+        .progress {
+          position: relative;
+          top: 0;
+          left: 0;
         }
 
         .temperature1 {
@@ -61,15 +69,74 @@
           left: 245px;
         }
         .pressure2 {
-          position:absolute;
+          position: absolute;
           top: 0px;
           left: 0px;
         }
         .pressure3 {
-          position:absolute;
+          position: absolute;
           top: 544px;
           left: 920px;
         }
+
+        .txt1 {
+          position: absolute;
+          top: 1px;
+          left: 10px;
+          font-size: 50;
+        }
+
+        .txt2 {
+          position: absolute;
+          top: 1px;
+          left: 380px;
+          font-size: 50;
+          }
+
+        .txt3 {
+          position: absolute;
+          top: 20px;
+          left: 805px;
+          font-size: 80;
+          color:red;
+          }
+        .txt4 {
+          position: absolute;
+          top: 10px;
+          left: 1050px;
+          font-size: 50;
+
+          }
+        .txt5 {
+          position: absolute;
+          top: 70px;
+          left: 1050px;
+          font-size: 50;
+
+          }
+        .txt6 {
+          position: absolute;
+          top: 70px;
+          left: 10px;
+          font-size: 50;
+
+          }
+        .txt7 {
+          position: absolute;
+          top: 70px;
+          left: 380px;
+          font-size: 50;
+
+          }
+
+        .txt10 {
+          position: absolute;
+          top: 70px;
+          left: 990px;
+          font-size: 50;
+          }
+
+
         </style>
     <head>
         <title>{{ title }} - Sodium transfer monitor</title>
@@ -77,15 +144,17 @@
 
     </head>
     <body>
-        <h3>Arduino 1 temperatures, {{ user.ard_temp }}</h3>
-        <h3>Arduino 2 pressures, {{ user.ard2_pres }}</h3>
-        <h3>Wireless temperatures, {{ user.wrl_temp }}</h3>
-        <h3>Current time: {{ time_data.current_time }}, Time since started: {{time_data.since_started }}</h3>
-        <h3> Pressure drop: {{pressures.P1 - pressures.P3}}</h3>
-        <h3> {{progress}}</h3>
-        <h3> {{time_data}} </h3>
+<!--        <h3>Arduino 1 temperatures, {{ user.ard_temp }}</h3>-->
+<!--        <h3>Arduino 2 pressures, {{ user.ard2_pres }}</h3>-->
+<!--        <h3>Wireless temperatures, {{ user.wrl_temp }}</h3>-->
+<!--        <h3>Current time: {{ time_data.current_time }}, Time since started: {{time_data.since_started }}</h3>-->
+<!--        <h3> Pressure drop: {{pressures.P1 - pressures.P3}}</h3>-->
+<!--        <h3> {{progress}}</h3>-->
+<!--        <h3> {{time_data}} </h3>-->
         <div class="container">
-            <img src="static/sodium_transfer.png" alt="Na"  style="width:1368;">
+
+            <img src="static/sodium_transfer.png" alt="Na"  style="width:1368; position: relative;"/>
+<!--            <img src="static/progress.png" style="position: relative; width: "/>-->
             <div class="temperature1">T1={{ temperatures.T1}} </div>
             <div class="temperature2">T2={{ temperatures.T2}}</div>
             <div class="temperature3">T3={{ temperatures.T3}}</div>
@@ -98,8 +167,19 @@
             <div class="pressure1">P1 = {{pressures.P1}}</div>
             <div class="pressure3">P3 = {{pressures.P3}}</div>
 
-
+            <div class="txt1">  {{ time_data.current_time }} </div>
+            <div class="txt2">  Elapsed {{time_data.since_started }} </div>
+            <div class="txt3">  {{progress.percents_done}}% </div>
+            <div class="txt4">  Δp={{pressures.diff}} psi </div>
+            <div class="txt5">  Flux={{progress.current_flux }} L/s </div>
+            <div class="txt6">  ETA {{progress.eta }} </div>
+            <div class="txt7">  Updated {{time_data.since_updated }} s</div>
+<!--            <div class="txt8">  {{time_data.since_started }} </div>-->
+<!--            <div class="txt9">  {{time_data.since_started }} </div>-->
+<!--            <div class="txt10">  F_av={{progress.average_flux }}L/s </div>-->
         </div>
+<a href="debug"> Error codes </a> <br>
+<a href="input"> Input form </a>
     </body>
 
 

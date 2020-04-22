@@ -5,9 +5,9 @@ def temperature_volt(arduino_signal):
     return round(5*32*arduino_signal, 1)
 
 
-def pressure_voltage(V):
-    pressure = (44.7*5*V - 44.7)/4 - 14.7
-    if V < 1/5:
+def pressure_voltage(arduino_signal):
+    pressure = (44.7*5*arduino_signal - 44.7)/4 - 14.7
+    if arduino_signal < 1/5:
         return 666
 
     return round(pressure, 2)

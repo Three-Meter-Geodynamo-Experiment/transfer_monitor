@@ -1,9 +1,9 @@
-from flask import Flask, render_template, request, send_from_directory
+from flask import Flask, render_template, request, send_from_directory, make_response
 import os
 import datetime
 import time
 import multiprocessing as mp
-import wireless_temp_connect
+# import wireless_temp_connect
 import logging
 import formulas
 import pyfirmata2
@@ -123,7 +123,7 @@ def index():
 
     # setting up time
     t = time.localtime()
-    current_time = time.strftime("%I:%M:%S %p", t)
+    current_time = time.strftime("%I:%M %p", t)
 
     current_ssm = (datetime.datetime.now() - datetime.datetime.now().replace(hour=0, minute=0, second=0)).total_seconds()
 
@@ -163,7 +163,7 @@ def index():
 
     user = {'ard_temp': arduino_temp, 'wrl_temp': wireless_temp, 'ard2_pres': arduino_pressure}
     temperatures = {'T1': wrls_t1, 'T2': wrls_t2, 'T3': wrls_t3, 'T4': adr_t1, 'T5': adr_t2, 'T6': adr_t3, 'T7': wrls_t4}
-    pressures = {'P1': adr_p1, 'P2': adr_p2, 'P3': adr_p3, 'P4': adr_p4}
+    pressures = {'P1': adr_p1, 'P2': adr_p2, 'P3': adr_p3, 'P4': adr_p4, 'diff': round(adr_p1-adr_p3, 2)}
     return render_template('index.html', title='Home', user=user, temperatures=temperatures,
                            pressures=pressures, time_data=time_data, progress=progress_data_web)
 
@@ -204,6 +204,25 @@ def setup_logger(name, log_file, level=logging.INFO):
 @app.route("/input")
 def input_height():
     return render_template('my-form.html', title='Input')
+
+
+@app.route("/plot_pressure")
+def plot_pressure():
+    r = make_response(render_template('plot_pressure.html'))
+    r.headers['Cache-Control'] = 'public, max-age=0'
+    return r
+
+
+@app.route("/plot_temperature")
+def plot_temperature():
+    r = make_response(render_template('plot_temperature.html'))
+    r.headers['Cache-Control'] = 'public, max-age=0'
+    return r
+
+
+@app.route("/debug")
+def debug():
+    return render_template('debug.html')
 
 
 @app.route('/input', methods=['POST'])
@@ -306,6 +325,7 @@ if __name__ == "__main__":
     data_gatherer.start()
     first_arduino.start()
     second_arduino.start()
+    update_progress()
     print('started everything')
     #  this area is unreachable
 
