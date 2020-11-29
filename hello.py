@@ -3,10 +3,11 @@ import os
 import datetime
 import time
 import multiprocessing as mp
-# import wireless_temp_connect
+import wireless_temp_connect
 import logging
 import formulas
 import pyfirmata2
+import draft_plotting
 
 # the multiprocessing array with probes data
 data_temp_pressure_array = mp.Array('d', 18*[-2])
@@ -15,6 +16,7 @@ progress_data = mp.Array('d', 6*[0])
 
 # defining the app
 app = Flask(__name__, static_url_path='/static')
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 
 @app.route('/favicon.ico')
@@ -149,7 +151,10 @@ def index():
         average_flux = 0
         eta = 0
     else:
-        percents_done = round(100 * (1 - formulas.remaining_volume(0.001*progress_data[3])/formulas.remaining_volume(0.001*progress_data[1])), 1)
+        try:
+            percents_done = round(100 * (1 - formulas.remaining_volume(0.001*progress_data[3])/formulas.remaining_volume(0.001*progress_data[1])), 1)
+        except ZeroDivisionError:
+            percents_done = 0
         current_flux = round(1000*progress_data[4], 1)
         average_flux = round(1000*progress_data[5], 1)
         if progress_data[4] > 0:
@@ -209,14 +214,21 @@ def input_height():
 @app.route("/plot_pressure")
 def plot_pressure():
     r = make_response(render_template('plot_pressure.html'))
-    r.headers['Cache-Control'] = 'public, max-age=0'
+    r.headers['Cache-Control'] = 'public, no-store, no-cache, max-age=0'
     return r
 
 
 @app.route("/plot_temperature")
 def plot_temperature():
     r = make_response(render_template('plot_temperature.html'))
-    r.headers['Cache-Control'] = 'public, max-age=0'
+    r.headers['Cache-Control'] = 'public, no-store, no-cache, max-age=0'
+    return r
+
+
+@app.route("/plot_recent")
+def plot_recent():
+    r = make_response(render_template('plot_data.html'))
+    r.headers['Cache-Control'] = 'public, no-store, no-cache, max-age=0'
     return r
 
 
@@ -321,10 +333,16 @@ if __name__ == "__main__":
     log_process = mp.Process(target=writing_data_log, args=(data_temp_pressure_array,))
     log_process.start()
 
+    #
+    update_plots = mp.Process(target=draft_plotting.infinite_update_plots, args=())
+
+    #  Here we start the apps
     app_run.start()
     data_gatherer.start()
     first_arduino.start()
     second_arduino.start()
+    update_plots.start()
+
     update_progress()
     print('started everything')
     #  this area is unreachable
