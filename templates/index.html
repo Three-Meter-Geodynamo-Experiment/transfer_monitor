@@ -18,65 +18,71 @@
 
         .temperature1 {
           position: absolute;
-          top: 330px;
-          left: 160px;
+          top: 210px;
+          left: 190px;
+
         }
 
         .temperature2 {
           position: absolute;
-          top: 300px;
-          left: 455px;
+          top: 370px;
+          left: 495px;
         }
 
         .temperature3 {
           position: absolute;
-          top: 722px;
-          left: 380px;
+          top: 792px;
+          left: 370px;
         }
 
         .temperature4 {
           position: absolute;
-          top: 175px;
-          left: 310px;
+          top: 145px;
+          left: 430px;
         }
 
         .temperature5 {
           position: absolute;
-          top: 200px;
-          left: 640px;
+          top: 170px;
+          left: 660px;
         }
 
         .temperature6 {
           position: absolute;
-          top: 332px;
-          left: 832px;
+          top: 312px;
+          left: 822px;
         }
 
         .temperature7 {
           position: absolute;
-          top: 450px;
-          left: 1040px;
+          top: 350px;
+          left: 1210px;
         }
 
         .temperature8 {
           position: absolute;
-          bottom: 8px;
-          right: 16px;
+          top: 390px;
+          left: 140px;
         }
         .pressure1 {
           position:absolute;
-          top: 500px;
-          left: 245px;
+          top: 550px;
+          left: 145px;
         }
         .pressure2 {
           position: absolute;
-          top: 0px;
-          left: 0px;
+          top: 504px;
+          left: 900px;
         }
         .pressure3 {
           position: absolute;
-          top: 544px;
-          left: 920px;
+          top: 574px;
+          left: 900px;
+        }
+        .pressure4 {
+          position: absolute;
+          top: 620px;
+          left: 145px;
         }
 
         .txt1 {
@@ -153,27 +159,31 @@
 <!--        <h3> {{time_data}} </h3>-->
         <div class="container">
 
-            <img src="static/sodium_transfer.png" alt="Na"  style="width:1368; position: relative;"/>
+            <img src="static/sodium_transfer.png" alt="Na"  style="width:1368; margin: 220px 0px;"/>
 <!--            <img src="static/progress.png" style="position: relative; width: "/>-->
-            <div class="temperature1">T1={{ temperatures.T1}} </div>
-            <div class="temperature2">T2={{ temperatures.T2}}</div>
-            <div class="temperature3">T3={{ temperatures.T3}}</div>
-            <div class="temperature4">T4={{ temperatures.T4}}</div>
-            <div class="temperature5">T5={{ temperatures.T5}}</div>
-            <div class="temperature6">T6={{ temperatures.T6}}</div>
-            <div class="temperature7">T7={{ temperatures.T7}}</div>
+            <div class="temperature1">T<sub>1</sub>={{ temperatures.T1}} </div>
+            <div class="temperature2">T<sub>2</sub>={{ temperatures.T2}}</div>
+            <div class="temperature3">T<sub>3</sub>={{ temperatures.T3}}</div>
+            <div class="temperature4">T<sub>4</sub>={{ temperatures.T4}}</div>
+            <div class="temperature5">T<sub>5</sub>={{ temperatures.T5}}</div>
+            <div class="temperature6">T<sub>6</sub>={{ temperatures.T6}}</div>
+            <div class="temperature7">T<sub>7</sub>={{ temperatures.T7}}</div>
+            <div class="temperature8">T<sub>8</sub>={{ temperatures.T8}}</div>
 <!--            <div class="temperature8">T8={{ temperatures.T8}}</div>-->
 
-            <div class="pressure1">P1 = {{pressures.P1}}</div>
-            <div class="pressure3">P3 = {{pressures.P3}}</div>
+            <div class="pressure1">P<sub>1</sub>={{pressures.P1}}</div>
+            <div class="pressure2">P<sub>2</sub>={{pressures.P2}}</div>
+            <div class="pressure3">P<sub>3</sub>={{pressures.P3}}</div>
+            <div class="pressure4">P<sub>4</sub>={{pressures.P4}}</div>
+
 
             <div class="txt1">  {{ time_data.current_time }} </div>
             <div class="txt2">  Elapsed {{time_data.since_started }} </div>
             <div class="txt3">  {{progress.percents_done}}% </div>
-            <div class="txt4">  Δp={{pressures.diff}} psi </div>
-            <div class="txt5">  Flux={{progress.current_flux }} L/s </div>
+            <div class="txt4">  Δp={{pressures.diff}}&nbsp;psi </div>
+            <div class="txt5">  Flow={{progress.current_flux }}&nbsp;L/s </div>
             <div class="txt6">  ETA {{progress.eta }} </div>
-            <div class="txt7">  Updated {{time_data.since_updated }} s</div>
+            <div class="txt7">  Updated {{time_data.since_updated }}&nbsp;s</div>
 <!--            <div class="txt8">  {{time_data.since_started }} </div>-->
 <!--            <div class="txt9">  {{time_data.since_started }} </div>-->
 <!--            <div class="txt10">  F_av={{progress.average_flux }}L/s </div>-->

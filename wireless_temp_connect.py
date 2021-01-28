@@ -41,7 +41,14 @@ def wireless_temp(wrls_temp_array=wrls_temp_array):
             T[int(response_array[0]) - 1] = 0
         else:
             # print(response_array[3])
-            T[int(response_array[0])-1] = float(response_array[3])
+            try:
+                T[int(response_array[0])-1] = float(response_array[3])
+            except ValueError:
+                print('Value error pew pew')
+            except IndexError:
+                print('Index error pew pew')
+
+
     # print('T', T)
     # time.sleep(3)
 

@@ -8,10 +8,15 @@ import logging
 import formulas
 import pyfirmata2
 import draft_plotting
+import serial
+from pymodbus.client.sync import ModbusSerialClient as ModbusClient
+
 
 # the multiprocessing array with probes data
 data_temp_pressure_array = mp.Array('d', 18*[-2])
-
+# the array of data for writing control.log
+data_control_log_array = mp.Array('d', 23*[0])
+# the array of the progress data
 progress_data = mp.Array('d', 6*[0])
 
 # defining the app
@@ -30,7 +35,7 @@ def updating_first_arduino(data_temp_pressure_array=data_temp_pressure_array):
             for chan_ind in range(6):
                 data_temp_pressure_array[chan_ind] = 0
 
-            board = pyfirmata2.Arduino('/dev/tty.usbmodem14201')
+            board = pyfirmata2.Arduino('/dev/ard_temp')
             board.samplingOn(100)
             analog_0 = board.get_pin('a:0:i')
             analog_1 = board.get_pin('a:1:i')
@@ -48,6 +53,8 @@ def updating_first_arduino(data_temp_pressure_array=data_temp_pressure_array):
                     data_temp_pressure_array[4] = float(analog_4.read())
                     data_temp_pressure_array[5] = float(analog_5.read())
                     # print(analog_0.read())
+                    # print([round(5*x, 3) for x in data_temp_pressure_array[0:6]])
+
                     time.sleep(1)
                     board.digital[13].write(1)
                     board.digital[13].write(0)
@@ -68,7 +75,7 @@ def updating_second_arduino(data_temp_pressure_array=data_temp_pressure_array):
             for chan_ind in range(6, 12):
                 data_temp_pressure_array[chan_ind] = 0
 
-            board = pyfirmata2.Arduino('/dev/tty.usbmodem14101')
+            board = pyfirmata2.Arduino('/dev/ard_pres')
             board.samplingOn(100)
             analog_0 = board.get_pin('a:0:i')
             analog_1 = board.get_pin('a:1:i')
@@ -76,7 +83,7 @@ def updating_second_arduino(data_temp_pressure_array=data_temp_pressure_array):
             analog_3 = board.get_pin('a:3:i')
             analog_4 = board.get_pin('a:4:i')
             analog_5 = board.get_pin('a:5:i')
-            time.sleep(0.501)
+            time.sleep(0.01501)
             while True:
                 try:
                     data_temp_pressure_array[6] = float(analog_0.read())
@@ -85,12 +92,13 @@ def updating_second_arduino(data_temp_pressure_array=data_temp_pressure_array):
                     data_temp_pressure_array[9] = float(analog_3.read())
                     data_temp_pressure_array[10] = float(analog_4.read())
                     data_temp_pressure_array[11] = float(analog_5.read())
-                    # print(analog_0.read())
+                    # print('pressure ard signal')
+                    # print([round(5*x, 3) for x in data_temp_pressure_array[10:11]])
                     time.sleep(1)
                     board.digital[13].write(1)
                     board.digital[13].write(0)
                 except TypeError:
-                    print('trying again Ard2')
+                    print('trying again Ard2 (pres)')
                     time.sleep(1)
                     continue
 
@@ -104,24 +112,38 @@ def updating_second_arduino(data_temp_pressure_array=data_temp_pressure_array):
 @app.route("/")
 def index():
     # gathering data from the multiprocessing array
-    arduino_temp = [formulas.temperature_volt(x) for x in data_temp_pressure_array[0:6]]
-    arduino_pressure = [formulas.pressure_voltage(x) for x in data_temp_pressure_array[6:12]]
+    reading_from_ard1_A4 = [x for x in data_temp_pressure_array[4:5]]
+    # print('first Ard 0.66 = ', reading_from_ard1_A5)
+    # print(round(32*data_temp_pressure_array[0]*3.3/reading_from_ard1_A4[0], 1),
+    #       round(5*data_temp_pressure_array[0]*3.3/5/reading_from_ard1_A4[0], 3),
+    #       round(reading_from_ard1_A4[0], 3), round(reading_from_ard1_A4[0]*5, 3))
+
+    arduino_temp = [formulas.temperature_volt(x, reading_from_ard1_A4[0]) for x in data_temp_pressure_array[0:6]]
+    # print(arduino_temp[0], arduino_temp[0]/32)
+    reading_from_ard2_A4 = [x for x in data_temp_pressure_array[10:11]]
+    # print('second Ard 0.66 = ', reading_from_ard2_A4)
+
+    arduino_pressure = [formulas.pressure_voltage(x, reading_from_ard2_A4[0]) for x in data_temp_pressure_array[6:12]]
+    arduino_pressure[3] = formulas.pressure_voltage2(data_temp_pressure_array[9], reading_from_ard2_A4[0])  #  adding second type of the pressure probe
+
     wireless_temp = data_temp_pressure_array[12:18]
 
     # print(wireless_temp)
-    adr_t1 = arduino_temp[0]
-    adr_t2 = arduino_temp[1]
-    adr_t3 = arduino_temp[2]
+    adr_t1 = int(arduino_temp[0])
+    adr_t2 = int(arduino_temp[1])
+    adr_t3 = int(arduino_temp[2])
+    adr_t4 = int(arduino_temp[3])
 
-    wrls_t1 = wireless_temp[0]
-    wrls_t2 = wireless_temp[1]
-    wrls_t3 = wireless_temp[2]
-    wrls_t4 = wireless_temp[3]
+    wrls_t1 = int(wireless_temp[0])
+    wrls_t2 = int(wireless_temp[1])
+    wrls_t3 = int(wireless_temp[2])
+    wrls_t4 = int(wireless_temp[3])
 
-    adr_p1 = arduino_pressure[0]
-    adr_p2 = arduino_pressure[1]
-    adr_p3 = arduino_pressure[2]
-    adr_p4 = arduino_pressure[3]
+    adr_p1 = round(arduino_pressure[0], 1)
+    adr_p2 = round(arduino_pressure[1], 1)
+    adr_p3 = round(arduino_pressure[2], 1)
+    adr_p4 = round(arduino_pressure[3], 1)
+    # print(*arduino_pressure[0:4])
 
     # setting up time
     t = time.localtime()
@@ -167,14 +189,14 @@ def index():
                          'current_flux': current_flux, 'average_flux': average_flux, 'eta': eta}
 
     user = {'ard_temp': arduino_temp, 'wrl_temp': wireless_temp, 'ard2_pres': arduino_pressure}
-    temperatures = {'T1': wrls_t1, 'T2': wrls_t2, 'T3': wrls_t3, 'T4': adr_t1, 'T5': adr_t2, 'T6': adr_t3, 'T7': wrls_t4}
-    pressures = {'P1': adr_p1, 'P2': adr_p2, 'P3': adr_p3, 'P4': adr_p4, 'diff': round(adr_p1-adr_p3, 2)}
+    temperatures = {'T1': wrls_t1, 'T2': wrls_t2, 'T3': wrls_t3, 'T4': adr_t1, 'T5': adr_t2, 'T6': adr_t3, 'T7': wrls_t4, 'T8': adr_t4}
+    pressures = {'P1': adr_p1, 'P2': adr_p2, 'P3': adr_p3, 'P4': adr_p4, 'diff': round(adr_p1-adr_p2, 2)}
     return render_template('index.html', title='Home', user=user, temperatures=temperatures,
                            pressures=pressures, time_data=time_data, progress=progress_data_web)
 
 
 def run_the_app():
-    app.run(host='0.0.0.0', port=80)
+    app.run(host='0.0.0.0', port=2020)
 
 
 def data_gathering(data_temp_pressure_array=data_temp_pressure_array):
@@ -184,6 +206,120 @@ def data_gathering(data_temp_pressure_array=data_temp_pressure_array):
         time.sleep(1)
 
 
+def data_control_gathering(data_control_log_array=data_control_log_array):
+    # connect the Arduino, Maple, Adam, modbus, and ADAM
+
+    # just lest wait a couple seconds to start comms
+    time.sleep(0.2)
+    connecting_devices = [1, 1, 1, 1, 1]
+
+    # connectind ADAM
+    if connecting_devices[1]:
+        # connecting to ADAM for getting heater temperatures
+        serial_arg = dict(port='/dev/ttyS1',
+                          baudrate=9600,
+                          stopbits=serial.STOPBITS_ONE,
+                          parity=serial.PARITY_NONE,
+                          bytesize=serial.EIGHTBITS,
+                          timeout=0.03)
+        adam_ser = None
+        try:
+            if adam_ser:
+                adam_ser.close()
+            adam_ser = serial.Serial(**serial_arg)
+            print('ADAM is connected')
+        except serial.SerialException as e:
+            print(e)
+
+    # now connecting MAPLE
+    if connecting_devices[2]:
+        serial_arg = dict(port='/dev/maple',
+                          baudrate=115200,
+                          stopbits=serial.STOPBITS_ONE,
+                          parity=serial.PARITY_NONE,
+                          bytesize=serial.EIGHTBITS)
+        maple_ser = None
+
+        try:
+            if maple_ser:
+                maple_ser.close()
+            maple_ser = serial.Serial(**serial_arg)
+            print('MAPLE connected')
+            # time.sleep(1)
+        except serial.SerialException as e:
+            print(e)
+
+    # and just getting the Na temperature from wireless_temp_connect.wireless_temp_timed()
+    # if connecting_devices[3]:
+
+    # and the modbus connections
+    if connecting_devices[4]:
+        mobucon = ModbusClient(
+            port='/dev/ttyS0',
+            stopbits=1,
+            bytesize=8,
+            parity='N',
+            baudrate=19200,
+            method='rtu',
+            timeout=0.07)
+        mobucon.connect()
+        print('Modbus connected, CHOO-CHOO')
+
+    # lest wait a bit and start
+    time.sleep(2)
+
+    while True:
+        # data_control_log_array[0:23] = 23*[0]
+
+        # working on the ADAM updates
+        if connecting_devices[1]:
+            adam_ser.write('#015\r'.encode())     # reads sphere inlet temp
+            time.sleep(0.03)
+            sp_in_t = adam_ser.read(1)
+            sp_in_t += adam_ser.read(adam_ser.inWaiting())
+
+            adam_ser.write('#013\r'.encode())     # reads sphere outlet temp
+            time.sleep(0.03)
+            sp_out_t = adam_ser.read(1)
+            sp_out_t += adam_ser.read(adam_ser.inWaiting())
+
+            adam_ser.write('#014\r'.encode())     # reads the heater temperature
+            time.sleep(0.03)
+            heat_t = adam_ser.read(1)
+            heat_t += adam_ser.read(adam_ser.inWaiting())
+
+            data_control_log_array[4] = float(sp_in_t.decode().strip('>+\r'))
+            data_control_log_array[7] = float(sp_out_t.decode().strip('>+\r'))
+            data_control_log_array[2] = float(heat_t.decode().strip('>+\r'))
+        # Maple
+        if connecting_devices[2]:
+            maple_data = maple_ser.read(1)
+            maple_data += maple_ser.read(maple_ser.inWaiting())
+
+            if '\r\n' in maple_data.decode():
+                maple_lines = maple_data.decode().splitlines()
+                # print(maple_lines)
+                second_to_last_line = [int(x) for x in maple_lines[-2].split()]
+                if len(second_to_last_line) == 4:
+                    data_control_log_array[6] = round(second_to_last_line[0] * 0.03085 - 13.02, 3)
+                    data_control_log_array[5] = round(second_to_last_line[1] * 0.03085 - 13.02, 3)
+                    data_control_log_array[8] = round(second_to_last_line[3] * 0.03085 - 13.02, 3)
+                    data_control_log_array[9] = round(second_to_last_line[2] * 0.03085 - 13.02, 3)
+        # wireless temp
+        if connecting_devices[3]:
+            data_control_log_array[1] = data_temp_pressure_array[13]
+        # Modbus, unit = 3 - heater
+        if connecting_devices[4]:
+            # print(mobucon.read_holding_registers(159, 1, unit=3).getRegister(0)/10)
+            try:
+                data_control_log_array[3] = mobucon.read_holding_registers(159, 1, unit=3).getRegister(0)/10
+            except AttributeError:
+                print('error with modbus communication')
+                data_control_log_array[3] = 0
+
+        time.sleep(0.1)
+
+
 def writing_data_log(data_temp_pressure_array=data_temp_pressure_array):
     while True:
         data = str(data_temp_pressure_array[:]).replace('[', '').replace(']', '').replace(',', '').replace(' ', '\t')
@@ -191,6 +327,17 @@ def writing_data_log(data_temp_pressure_array=data_temp_pressure_array):
         ssm = str((now - now.replace(hour=0, minute=0, second=0)).total_seconds())
         logger.info(ssm + '\t' + data)
         time.sleep(3)
+
+
+def writing_control_log(data_control_log_array=data_control_log_array):
+    # waiting a bit till everything is connected
+    time.sleep(5)
+    while True:
+        data_control_log = str(data_control_log_array[:]).replace('[', '').replace(']', '').replace(',', '').replace(' ', '\t');
+        now = datetime.datetime.now()
+        ssm = str((now - now.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds())
+        control_logger.info(ssm + '\t' + data_control_log)
+        time.sleep(0.5)
 
 
 def setup_logger(name, log_file, level=logging.INFO):
@@ -209,6 +356,33 @@ def setup_logger(name, log_file, level=logging.INFO):
 @app.route("/input")
 def input_height():
     return render_template('my-form.html', title='Input')
+
+
+@app.route("/heater")
+def input_heater():
+    # t = time.localtime()
+    # current_time = time.strftime("%I:%M %p", t)
+    # heater_data = {'time': current_time, 'power': data_control_log_array[3], 'temp_oil_in': data_control_log_array[4],
+    #                'temp_oil_out': data_control_log_array[7], 'temp_heater': data_control_log_array[2],
+    #                'pressure_in': data_control_log_array[6], 'pressure_out': data_control_log_array[5],
+    #                'pressure_pump': data_control_log_array[8]}
+    return render_template('heater.html', title='Heater input')
+
+
+@app.route("/heater_table_plots")
+def heater_table_plots():
+    t = time.localtime()
+    current_time = time.strftime("%I:%M %p", t)
+    heater_data = {'time': current_time, 'power': data_control_log_array[3], 'temp_oil_in': data_control_log_array[4],
+                   'temp_oil_out': data_control_log_array[7], 'temp_heater': data_control_log_array[2],
+                   'pressure_in': data_control_log_array[6], 'pressure_out': data_control_log_array[5],
+                   'pressure_pump': data_control_log_array[8]}
+    return render_template('heater_table_plots.html', heater_data=heater_data)
+
+
+@app.route('/heater_input_form')
+def heater_input_form():
+    return render_template('heater_input_form.html')
 
 
 @app.route("/plot_pressure")
@@ -253,6 +427,24 @@ def my_form_post(progress_data=progress_data):
     update_progress()
 
     return render_template('my-form.html', title='Input')
+
+
+@app.route('/heater_input_form', methods=['POST'])
+def heater_post():
+    power_txt = request.form['heater_form']
+    try:
+        power = float(power_txt)
+        if power < 0 or power > 100:
+            return 'should be between 0 and 100'
+    except ValueError:
+        return 'Not a number, try again'
+
+    # # mobucon.write_register(5102, int(10.0 * power), unit=3)
+    # t = time.localtime()
+    # current_time = time.strftime("%I:%M %p", t)
+    # heater_data = {'time': current_time, 'power': 0, 'temp_oil_in': 1, 'temp_oil_out': 2, 'temp_heater': 3,
+    #                'pressure_in': 4, 'pressure_out': 5, 'pressure_pump': 6}
+    return render_template('heater_input_form.html')
 
 
 def update_progress():
@@ -309,6 +501,7 @@ if __name__ == "__main__":
     data_gatherer = mp.Process(target=data_gathering, args=(data_temp_pressure_array,))
     first_arduino = mp.Process(target=updating_first_arduino, args=(data_temp_pressure_array,))
     second_arduino = mp.Process(target=updating_second_arduino, args=(data_temp_pressure_array,))
+    control_data_gatherer = mp.Process(target=data_control_gathering, args=(data_control_log_array,))
 
     # defining the app using mp
     app_run = mp.Process(target=run_the_app)
@@ -319,26 +512,40 @@ if __name__ == "__main__":
     file_name = "logs/pr_temp_" + str(today) + '.log'
     file_name2 = "logs/progress_" + str(today) + '.log'
 
+    # making the today's directory in /data/3m
+    control_log_path = '/data/3m/' + str(today)
+    if not os.path.isdir(control_log_path):
+        os.mkdir(control_log_path)
+    file_name_logger = '/data/3m/' + str(today) + '/control.log'
+
     formatter = logging.Formatter('%(message)s')
 
-    # logging.basicConfig(filename=file_name, level=logging.DEBUG, format='%(message)s')
+    # main logger for the transfer data
     logger = setup_logger('first_logger', file_name)
-
+    # progress logger
     progress_logger = setup_logger('progress_log', file_name2)
+    #
+    control_logger = setup_logger('control_log', file_name_logger)
 
     now = datetime.datetime.now()
     ssm = (now - now.replace(hour=0, minute=0, second=0)).total_seconds()
 
+    # writing one line and starting the log process
     logger.info(str(ssm) + '\tStarted the monitoring app')
     log_process = mp.Process(target=writing_data_log, args=(data_temp_pressure_array,))
     log_process.start()
 
-    #
+    # starting control log process
+    control_log_process = mp.Process(target=writing_control_log, args=(data_control_log_array,))
+    control_log_process.start()
+
+    # the process to make plots
     update_plots = mp.Process(target=draft_plotting.infinite_update_plots, args=())
 
     #  Here we start the apps
     app_run.start()
     data_gatherer.start()
+    control_data_gatherer.start()
     first_arduino.start()
     second_arduino.start()
     update_plots.start()
