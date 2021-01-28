@@ -1,6 +1,11 @@
-Input the desirable heater power in percents
-<form method="POST">
-    <input name="heater_form">
-    <input type="submit">
+<text style="display: {{buttons_state.disconnect}};"> Input the desirable heater power in percents</text>
+<text style="display: {{buttons_state.connect}};"> Press the button to connect to the heater</text>
+<form method="POST" >
+    <input name="heater_form" style="display: {{buttons_state.disconnect}};">
+    <input type="submit" style="display: {{buttons_state.disconnect}};">
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    <button type="submit" name="turn_off_heater" value="1" style="display: {{buttons_state.turn_off}};"> Turn off heater </button>
+    <button type="submit" name="connect_heater" value="2" style="display: {{buttons_state.connect}};"> Connect the heater</button>
+    <button type="submit" name="disconnect_heater" value="3" style="display: {{buttons_state.disconnect}};"> Disconnect </button>
 </form>
 

@@ -15,9 +15,18 @@ from pymodbus.client.sync import ModbusSerialClient as ModbusClient
 # the multiprocessing array with probes data
 data_temp_pressure_array = mp.Array('d', 18*[-2])
 # the array of data for writing control.log
-data_control_log_array = mp.Array('d', 23*[0])
+data_control_log_array = mp.Array('d', 24*[0])
+data_control_log_array[23] = 0  # this one is requested heater power
 # the array of the progress data
 progress_data = mp.Array('d', 6*[0])
+# devices connection requests
+devices_connect = mp.Array('i', [1, 1, 1, 1, 0])
+# set to zero if don't want to connect
+# devices_connect[0] - Arduino
+# devices_connect[1] - ADAM
+# devices_connect[2] - MAPLE
+# devices_connect[3] - wireless temp
+# devices_connect[4] - MODBUS
 
 # defining the app
 app = Flask(__name__, static_url_path='/static')
@@ -211,10 +220,10 @@ def data_control_gathering(data_control_log_array=data_control_log_array):
 
     # just lest wait a couple seconds to start comms
     time.sleep(0.2)
-    connecting_devices = [1, 1, 1, 1, 1]
+    devices_connect
 
     # connectind ADAM
-    if connecting_devices[1]:
+    if devices_connect[1]:
         # connecting to ADAM for getting heater temperatures
         serial_arg = dict(port='/dev/ttyS1',
                           baudrate=9600,
@@ -232,7 +241,7 @@ def data_control_gathering(data_control_log_array=data_control_log_array):
             print(e)
 
     # now connecting MAPLE
-    if connecting_devices[2]:
+    if devices_connect[2]:
         serial_arg = dict(port='/dev/maple',
                           baudrate=115200,
                           stopbits=serial.STOPBITS_ONE,
@@ -253,17 +262,8 @@ def data_control_gathering(data_control_log_array=data_control_log_array):
     # if connecting_devices[3]:
 
     # and the modbus connections
-    if connecting_devices[4]:
-        mobucon = ModbusClient(
-            port='/dev/ttyS0',
-            stopbits=1,
-            bytesize=8,
-            parity='N',
-            baudrate=19200,
-            method='rtu',
-            timeout=0.07)
-        mobucon.connect()
-        print('Modbus connected, CHOO-CHOO')
+    # if connecting_devices[4]:
+
 
     # lest wait a bit and start
     time.sleep(2)
@@ -272,7 +272,7 @@ def data_control_gathering(data_control_log_array=data_control_log_array):
         # data_control_log_array[0:23] = 23*[0]
 
         # working on the ADAM updates
-        if connecting_devices[1]:
+        if devices_connect[1]:
             adam_ser.write('#015\r'.encode())     # reads sphere inlet temp
             time.sleep(0.03)
             sp_in_t = adam_ser.read(1)
@@ -292,7 +292,7 @@ def data_control_gathering(data_control_log_array=data_control_log_array):
             data_control_log_array[7] = float(sp_out_t.decode().strip('>+\r'))
             data_control_log_array[2] = float(heat_t.decode().strip('>+\r'))
         # Maple
-        if connecting_devices[2]:
+        if devices_connect[2]:
             maple_data = maple_ser.read(1)
             maple_data += maple_ser.read(maple_ser.inWaiting())
 
@@ -306,16 +306,12 @@ def data_control_gathering(data_control_log_array=data_control_log_array):
                     data_control_log_array[8] = round(second_to_last_line[3] * 0.03085 - 13.02, 3)
                     data_control_log_array[9] = round(second_to_last_line[2] * 0.03085 - 13.02, 3)
         # wireless temp
-        if connecting_devices[3]:
+        if devices_connect[3]:
             data_control_log_array[1] = data_temp_pressure_array[13]
         # Modbus, unit = 3 - heater
-        if connecting_devices[4]:
+        # if connecting_devices[4]:
             # print(mobucon.read_holding_registers(159, 1, unit=3).getRegister(0)/10)
-            try:
-                data_control_log_array[3] = mobucon.read_holding_registers(159, 1, unit=3).getRegister(0)/10
-            except AttributeError:
-                print('error with modbus communication')
-                data_control_log_array[3] = 0
+
 
         time.sleep(0.1)
 
@@ -360,12 +356,6 @@ def input_height():
 
 @app.route("/heater")
 def input_heater():
-    # t = time.localtime()
-    # current_time = time.strftime("%I:%M %p", t)
-    # heater_data = {'time': current_time, 'power': data_control_log_array[3], 'temp_oil_in': data_control_log_array[4],
-    #                'temp_oil_out': data_control_log_array[7], 'temp_heater': data_control_log_array[2],
-    #                'pressure_in': data_control_log_array[6], 'pressure_out': data_control_log_array[5],
-    #                'pressure_pump': data_control_log_array[8]}
     return render_template('heater.html', title='Heater input')
 
 
@@ -376,13 +366,22 @@ def heater_table_plots():
     heater_data = {'time': current_time, 'power': data_control_log_array[3], 'temp_oil_in': data_control_log_array[4],
                    'temp_oil_out': data_control_log_array[7], 'temp_heater': data_control_log_array[2],
                    'pressure_in': data_control_log_array[6], 'pressure_out': data_control_log_array[5],
-                   'pressure_pump': data_control_log_array[8]}
+                   'pressure_pump': data_control_log_array[8], 'temp_na': data_temp_pressure_array[13]}
     return render_template('heater_table_plots.html', heater_data=heater_data)
+
+
+def buttons_state():
+    if devices_connect[4] == 0:
+        buttons_state = {'connect': 'Yes', 'turn_off': 'none', 'disconnect': 'none'}
+    else:
+        buttons_state = {'connect': 'none', 'turn_off': 'Yes', 'disconnect': 'Yes'}
+    return buttons_state
 
 
 @app.route('/heater_input_form')
 def heater_input_form():
-    return render_template('heater_input_form.html')
+
+    return render_template('heater_input_form.html', buttons_state=buttons_state())
 
 
 @app.route("/plot_pressure")
@@ -431,20 +430,34 @@ def my_form_post(progress_data=progress_data):
 
 @app.route('/heater_input_form', methods=['POST'])
 def heater_post():
-    power_txt = request.form['heater_form']
-    try:
-        power = float(power_txt)
-        if power < 0 or power > 100:
-            return 'should be between 0 and 100'
-    except ValueError:
-        return 'Not a number, try again'
 
-    # # mobucon.write_register(5102, int(10.0 * power), unit=3)
-    # t = time.localtime()
-    # current_time = time.strftime("%I:%M %p", t)
-    # heater_data = {'time': current_time, 'power': 0, 'temp_oil_in': 1, 'temp_oil_out': 2, 'temp_heater': 3,
-    #                'pressure_in': 4, 'pressure_out': 5, 'pressure_pump': 6}
-    return render_template('heater_input_form.html')
+    if request.method == 'POST':
+        page_respond = request.form
+        # print(page_respond)
+
+        if 'turn_off_heater' in page_respond:
+            data_control_log_array[23] = 0
+            return render_template('heater_input_form.html', buttons_state=buttons_state())
+        elif 'connect_heater' in page_respond:
+            devices_connect[4] = 1
+            return render_template('heater_input_form.html', buttons_state=buttons_state())
+        elif 'disconnect_heater' in page_respond:
+            devices_connect[4] = 0
+            return render_template('heater_input_form.html', buttons_state=buttons_state())
+
+        if devices_connect[4] == 0:
+            return 'MODBUS is not connected'
+        power_txt = page_respond['heater_form']
+        try:
+            power = float(power_txt)
+            if power < 0 or power > 100:
+                return 'should be between 0 and 100'
+        except ValueError:
+            return 'Not a number, try again'
+
+        data_control_log_array[23] = power
+
+        return render_template('heater_input_form.html', buttons_state=buttons_state())
 
 
 def update_progress():
@@ -495,8 +508,26 @@ def progress_page():
     return progress_file_data
 
 
+def make_modbus_connection():
+    mobucon = ModbusClient(
+        port='/dev/ttyS0',
+        stopbits=1,
+        bytesize=8,
+        parity='N',
+        baudrate=19200,
+        method='rtu',
+        timeout=0.07)
+    return mobucon
+
+
 if __name__ == "__main__":
     print('Starting the app')
+
+    # create a modbus connection if it's requested by default
+    if devices_connect[4] == 1:
+        mobucon = make_modbus_connection()
+        mobucon.connect()
+
     # process for gathering data
     data_gatherer = mp.Process(target=data_gathering, args=(data_temp_pressure_array,))
     first_arduino = mp.Process(target=updating_first_arduino, args=(data_temp_pressure_array,))
@@ -552,6 +583,40 @@ if __name__ == "__main__":
 
     update_progress()
     print('started everything')
+
+    # this cycle connects to MODBUS every once in a while and checks it, also updates the values on the heater
+    while True:
+        if devices_connect[4] == 1:
+            try:
+                power = data_control_log_array[23]
+                mobucon.write_register(5102, int(10.0 * power), unit=3)
+            except NameError or AttributeError:
+                mobucon = make_modbus_connection()
+                mobucon.connect()
+                print('Modbus connected, CHOO-CHOO')
+
+            if not mobucon.connect():
+                print('Modbus_disconnected, trying again')
+                mobucon = make_modbus_connection()
+                mobucon.connect()
+            try:
+                # print(mobucon.read_holding_registers(159, 1, unit=3).getRegister(0)/10)
+                # time.sleep(0.05)
+                data_control_log_array[3] = mobucon.read_holding_registers(159, 1, unit=3).getRegister(0) / 10
+            except AttributeError:
+                print('error with modbus communication')
+                data_control_log_array[3] = 0
+        else:
+            # if we are not talking to MAPLE set up the desirable power back to zero
+            data_control_log_array[23] = 0
+            try:
+                mobucon.write_register(5102, int(0), unit=3)
+                mobucon.close()
+            except NameError:
+                pass
+
+        time.sleep(0.1)
+
     #  this area is unreachable
 
     app_run.join()

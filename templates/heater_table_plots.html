@@ -4,16 +4,18 @@
         <tr>
             <td>Time</td>
             <td>Power, %</td>
+            <td>T<sub>3M shell</sub>, C</td>
             <td>T<sub>oil in</sub>, C</td>
             <td>T<sub>oil out</sub>, C</td>
             <td>T<sub>heater</sub>, C</td>
-            <td>P<sub>in</sub></td>
-            <td>P<sub>out</sub></td>
+            <td>P<sub>oil in</sub></td>
+            <td>P<sub>oil out</sub></td>
             <td>P<sub>pump</sub></td>
         </tr>
         <tr>
             <td>{{heater_data.time}}</td>
             <td>{{heater_data.power}}</td>
+            <td>{{heater_data.temp_na}}</td>
             <td>{{heater_data.temp_oil_in}}</td>
             <td>{{heater_data.temp_oil_out}}</td>
             <td>{{heater_data.temp_heater}}</td>
@@ -23,4 +25,10 @@
 
         </tr>
     </table>
+
+
+
 </font>
+
+<img src="static/temperature_heater.png"   style="width:50%; position: fixed; left: 0;"/>
+<img src="static/temperature_heater_recent.png"   style="width:50%; position: fixed; left: 50%;"/>
