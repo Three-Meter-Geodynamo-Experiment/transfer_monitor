@@ -432,6 +432,9 @@ def my_form_post(progress_data=progress_data):
 def heater_post():
 
     if request.method == 'POST':
+        if request.remote_addr != '128.8.86.195':
+            return 'Control is only possible from Sodium computer'
+
         page_respond = request.form
         # print(page_respond)
 
