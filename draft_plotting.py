@@ -148,7 +148,7 @@ def infinite_update_plots():
         temperature_in = [ctr_log_line[5] if ctr_log_line[5] > 0 else None for ctr_log_line in control_log_data]
         temperature_out = [ctr_log_line[8] if ctr_log_line[8] > 0 else None for ctr_log_line in control_log_data]
         temperature_na = [ctr_log_line[2] if ctr_log_line[2] > 0 else None for ctr_log_line in control_log_data]
-        heater_power = [ctr_log_line[4] if ctr_log_line[4] > 0 else None for ctr_log_line in control_log_data]
+        heater_power = [ctr_log_line[4] if ctr_log_line[4] >= 0 else None for ctr_log_line in control_log_data]
 
         plt.plot(time_control_array, temperature_in)
         plt.plot(time_control_array, temperature_out)

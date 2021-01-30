@@ -351,7 +351,7 @@ def setup_logger(name, log_file, level=logging.INFO):
 
 @app.route("/input")
 def input_height():
-    return render_template('my-form.html', title='Input')
+    return render_template('input-form.html', title='Input')
 
 
 @app.route("/heater")
@@ -368,6 +368,11 @@ def heater_table_plots():
                    'pressure_in': data_control_log_array[6], 'pressure_out': data_control_log_array[5],
                    'pressure_pump': data_control_log_array[8], 'temp_na': data_temp_pressure_array[13]}
     return render_template('heater_table_plots.html', heater_data=heater_data)
+
+
+@app.route('/links')
+def add_links():
+    return render_template('links.html')
 
 
 def buttons_state():
@@ -425,7 +430,7 @@ def my_form_post(progress_data=progress_data):
 
     update_progress()
 
-    return render_template('my-form.html', title='Input')
+    return render_template('input-form.html', title='Input')
 
 
 @app.route('/heater_input_form', methods=['POST'])
@@ -523,6 +528,42 @@ def make_modbus_connection():
     return mobucon
 
 
+def update_modbus(devices_connect=devices_connect, data_control_log_array=data_control_log_array):
+    # this cycle connects to MODBUS every once in a while and checks it, also updates the values on the heater
+    while True:
+        if devices_connect[4] == 1:
+            try:
+                power = data_control_log_array[23]
+                mobucon.write_register(5102, int(10.0 * power), unit=3)
+            except NameError or AttributeError:
+                mobucon = make_modbus_connection()
+                mobucon.connect()
+                print('Modbus connected, CHOO-CHOO')
+
+            if not mobucon.connect():
+                print('Modbus_disconnected, trying again')
+                mobucon = make_modbus_connection()
+                mobucon.connect()
+                print('Modbus connected again, CHOO-CHOO')
+            try:
+                # print(mobucon.read_holding_registers(159, 1, unit=3).getRegister(0)/10)
+                # time.sleep(0.05)
+                data_control_log_array[3] = mobucon.read_holding_registers(159, 1, unit=3).getRegister(0) / 10
+            except AttributeError:
+                print('error with modbus communication')
+                data_control_log_array[3] = 0
+        else:
+            # if we are not talking to MAPLE set up the desirable power back to zero
+            data_control_log_array[23] = 0
+            try:
+                mobucon.write_register(5102, int(0), unit=3)
+                mobucon.close()
+            except NameError:
+                pass
+
+        time.sleep(0.1)
+
+
 if __name__ == "__main__":
     print('Starting the app')
 
@@ -536,6 +577,7 @@ if __name__ == "__main__":
     first_arduino = mp.Process(target=updating_first_arduino, args=(data_temp_pressure_array,))
     second_arduino = mp.Process(target=updating_second_arduino, args=(data_temp_pressure_array,))
     control_data_gatherer = mp.Process(target=data_control_gathering, args=(data_control_log_array,))
+    update_modbus_process = mp.Process(target=update_modbus, args=(devices_connect, data_control_log_array, ))
 
     # defining the app using mp
     app_run = mp.Process(target=run_the_app)
@@ -578,47 +620,16 @@ if __name__ == "__main__":
 
     #  Here we start the apps
     app_run.start()
+    # print('PEW PEW PEW')
     data_gatherer.start()
     control_data_gatherer.start()
     first_arduino.start()
     second_arduino.start()
     update_plots.start()
+    update_modbus_process.start()
 
     update_progress()
     print('started everything')
-
-    # this cycle connects to MODBUS every once in a while and checks it, also updates the values on the heater
-    while True:
-        if devices_connect[4] == 1:
-            try:
-                power = data_control_log_array[23]
-                mobucon.write_register(5102, int(10.0 * power), unit=3)
-            except NameError or AttributeError:
-                mobucon = make_modbus_connection()
-                mobucon.connect()
-                print('Modbus connected, CHOO-CHOO')
-
-            if not mobucon.connect():
-                print('Modbus_disconnected, trying again')
-                mobucon = make_modbus_connection()
-                mobucon.connect()
-            try:
-                # print(mobucon.read_holding_registers(159, 1, unit=3).getRegister(0)/10)
-                # time.sleep(0.05)
-                data_control_log_array[3] = mobucon.read_holding_registers(159, 1, unit=3).getRegister(0) / 10
-            except AttributeError:
-                print('error with modbus communication')
-                data_control_log_array[3] = 0
-        else:
-            # if we are not talking to MAPLE set up the desirable power back to zero
-            data_control_log_array[23] = 0
-            try:
-                mobucon.write_register(5102, int(0), unit=3)
-                mobucon.close()
-            except NameError:
-                pass
-
-        time.sleep(0.1)
 
     #  this area is unreachable
 
@@ -627,3 +638,5 @@ if __name__ == "__main__":
     log_process.join()
     first_arduino.join()
     second_arduino.join()
+    update_plots.join()
+    update_modbus_process.join()
