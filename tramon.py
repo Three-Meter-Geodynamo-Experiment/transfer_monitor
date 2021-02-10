@@ -92,7 +92,7 @@ def updating_second_arduino(data_temp_pressure_array=data_temp_pressure_array):
             analog_3 = board.get_pin('a:3:i')
             analog_4 = board.get_pin('a:4:i')
             analog_5 = board.get_pin('a:5:i')
-            time.sleep(0.01501)
+            time.sleep(0.015011)
             while True:
                 try:
                     data_temp_pressure_array[6] = float(analog_0.read())
@@ -196,10 +196,15 @@ def index():
 
     progress_data_web = {'percents_done': percents_done,
                          'current_flux': current_flux, 'average_flux': average_flux, 'eta': eta}
+    if adr_p3 > 600 or adr_p2 > 600:
+        p_tank = min(adr_p3, adr_p2)
+    else:
+        p_tank = (adr_p3 + adr_p2)/2
 
+    p_difference = round(adr_p1-p_tank, 2)
     user = {'ard_temp': arduino_temp, 'wrl_temp': wireless_temp, 'ard2_pres': arduino_pressure}
     temperatures = {'T1': wrls_t1, 'T2': wrls_t2, 'T3': wrls_t3, 'T4': adr_t1, 'T5': adr_t2, 'T6': adr_t3, 'T7': wrls_t4, 'T8': adr_t4}
-    pressures = {'P1': adr_p1, 'P2': adr_p2, 'P3': adr_p3, 'P4': adr_p4, 'diff': round(adr_p1-adr_p2, 2)}
+    pressures = {'P1': adr_p1, 'P2': adr_p2, 'P3': adr_p3, 'P4': adr_p4, 'diff': p_difference}
     return render_template('index.html', title='Home', user=user, temperatures=temperatures,
                            pressures=pressures, time_data=time_data, progress=progress_data_web)
 
@@ -220,7 +225,7 @@ def data_control_gathering(data_control_log_array=data_control_log_array):
 
     # just lest wait a couple seconds to start comms
     time.sleep(0.2)
-    devices_connect
+    # devices_connect
 
     # connectind ADAM
     if devices_connect[1]:
@@ -345,6 +350,11 @@ def setup_logger(name, log_file, level=logging.INFO):
     logger = logging.getLogger(name)
     logger.setLevel(level)
     logger.addHandler(handler)
+    if name == 'control_log':
+        try:
+            os.chmod(log_file, 0o777)
+        except PermissionError:
+            print('File already was created by someone else')
 
     return logger
 
@@ -568,9 +578,9 @@ if __name__ == "__main__":
     print('Starting the app')
 
     # create a modbus connection if it's requested by default
-    if devices_connect[4] == 1:
-        mobucon = make_modbus_connection()
-        mobucon.connect()
+    # if devices_connect[4] == 1:
+    #     mobucon = make_modbus_connection()
+    #     mobucon.connect()
 
     # process for gathering data
     data_gatherer = mp.Process(target=data_gathering, args=(data_temp_pressure_array,))
@@ -592,6 +602,7 @@ if __name__ == "__main__":
     control_log_path = '/data/3m/' + str(today)
     if not os.path.isdir(control_log_path):
         os.mkdir(control_log_path)
+        os.chmod(control_log_path, 0o777)
     file_name_logger = '/data/3m/' + str(today) + '/control.log'
 
     formatter = logging.Formatter('%(message)s')

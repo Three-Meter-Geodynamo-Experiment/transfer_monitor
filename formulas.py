@@ -5,7 +5,7 @@ def temperature_volt(arduino_signal, v33=3.38/5):
     # print('v33= ', v33)
     if v33 < 0.1:
         v33 = 3.38/5
-    return round(5*32*arduino_signal*3.38/5/v33, 1)
+    return round(5*32*arduino_signal*3.38/5/v33, 2)
 
 
 def pressure_voltage(arduino_signal, v33=3.3/5):
@@ -16,7 +16,7 @@ def pressure_voltage(arduino_signal, v33=3.3/5):
     pressure = 44.7/4*(5*arduino_signal*3.3/5/v33-1) - 14.7
     if arduino_signal < 1/5:
         return 666
-    return round(pressure, 2)
+    return round(pressure, 3)
 
 
 def pressure_voltage2(arduino_signal, v33=3.3/5):
@@ -25,8 +25,7 @@ def pressure_voltage2(arduino_signal, v33=3.3/5):
     pressure = 15/4*(5*arduino_signal*3.3/5/v33-1)
     if arduino_signal < 1/5:
         return 666
-    return round(pressure, 2)
-
+    return round(pressure, 3)
 
 
 def remaining_volume(measurement):
