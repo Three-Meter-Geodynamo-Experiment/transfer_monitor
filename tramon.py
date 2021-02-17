@@ -10,6 +10,8 @@ import pyfirmata2
 import draft_plotting
 import serial
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient
+import smtplib
+from email.mime.text import MIMEText
 
 
 # the multiprocessing array with probes data
@@ -330,6 +332,44 @@ def writing_data_log(data_temp_pressure_array=data_temp_pressure_array):
         time.sleep(3)
 
 
+# def sending_sms(text):
+#     artur = '8304994663@tmomail.net'
+#     ruben = '3015479282@tmomail.net'
+#     heidi = '2024152874@tmomail.net'
+#     dan = '3016466601@txt.att.net'
+#     bryan = '3017853928@vtext.com'
+#
+#     # this part is for testing the STMP server
+#
+#     me = 'threemeter@sodium.umd.edu'
+#     team = [artur, ruben]
+#     msg = MIMEText(text)
+#     msg['Subject'] = '3M alarm'
+#     msg['From'] = me
+#     msg['To'] = ', '.join(team)
+#     s = smtplib.SMTP('localhost')
+#     s.sendmail(me, team, msg.as_string())
+#     print('sent the warning mail')
+
+
+# def checking_alarms(data_temp_pressure_array=data_temp_pressure_array):
+#     overheating = False
+#     shell_max = 120
+#     bottom_max = 99
+#     while True:
+#         if not overheating:
+#             arduino_temp = [formulas.temperature_volt(x, data_temp_pressure_array[4]) for x in
+#                             data_temp_pressure_array[0:6]]
+#             wireless_temp = data_temp_pressure_array[12:18]
+#             print('T8 and T3')
+#             print(arduino_temp[3], wireless_temp[2])
+#             if shell_max < arduino_temp[2] < 140 or bottom_max < wireless_temp[2] < 140:
+#                 sending_sms('Might be overheating, check temperature')
+#                 overheating = True
+#
+#         time.sleep(5)
+
+
 def writing_control_log(data_control_log_array=data_control_log_array):
     # waiting a bit till everything is connected
     time.sleep(5)
@@ -629,6 +669,9 @@ if __name__ == "__main__":
     # the process to make plots
     update_plots = mp.Process(target=draft_plotting.infinite_update_plots, args=())
 
+    # the process to send alarm sms
+    # check_alarms_send_messages = mp.Process(target=checking_alarms, args=(data_temp_pressure_array,))
+
     #  Here we start the apps
     app_run.start()
     # print('PEW PEW PEW')
@@ -638,6 +681,7 @@ if __name__ == "__main__":
     second_arduino.start()
     update_plots.start()
     update_modbus_process.start()
+    # check_alarms_send_messages.start()
 
     update_progress()
     print('started everything')
