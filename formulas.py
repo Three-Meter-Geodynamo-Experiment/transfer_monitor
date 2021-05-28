@@ -46,7 +46,7 @@ def remaining_volume(measurement):
         volume = volume_total - pi/3*x**2*(3*R-x) + pi*a**2*d + pi/3*(x-d)**2*(3*r - (x-d))
     else:
         volume = volume_total - pi/3*x**2*(3*R-x) + pi*a**2*d + 4./3*pi*r**3 + pi*a**2*(x-2*r-d)
-    return volume
+    return volume_total-volume
 
 
 if __name__ == "__main__":

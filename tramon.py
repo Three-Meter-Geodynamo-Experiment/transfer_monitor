@@ -207,7 +207,7 @@ def index():
     user = {'ard_temp': arduino_temp, 'wrl_temp': wireless_temp, 'ard2_pres': arduino_pressure}
     temperatures = {'T1': wrls_t1, 'T2': wrls_t2, 'T3': wrls_t3, 'T4': adr_t1, 'T5': adr_t2, 'T6': adr_t3, 'T7': wrls_t4, 'T8': adr_t4}
     pressures = {'P1': adr_p1, 'P2': adr_p2, 'P3': adr_p3, 'P4': adr_p4, 'diff': p_difference}
-    return render_template('index.html', title='Home', user=user, temperatures=temperatures,
+    return render_template('index_tank.html', title='Home', user=user, temperatures=temperatures,
                            pressures=pressures, time_data=time_data, progress=progress_data_web)
 
 
@@ -232,7 +232,8 @@ def data_control_gathering(data_control_log_array=data_control_log_array):
     # connectind ADAM
     if devices_connect[1]:
         # connecting to ADAM for getting heater temperatures
-        serial_arg = dict(port='/dev/ttyS1',
+        # time.sleep(1.2)   #  '/dev/ttyUSB2' '/dev/ttyS1'
+        serial_arg = dict(port='/dev/ttyUSB1',
                           baudrate=9600,
                           stopbits=serial.STOPBITS_ONE,
                           parity=serial.PARITY_NONE,
@@ -284,20 +285,29 @@ def data_control_gathering(data_control_log_array=data_control_log_array):
             time.sleep(0.03)
             sp_in_t = adam_ser.read(1)
             sp_in_t += adam_ser.read(adam_ser.inWaiting())
+            # print(type(sp_in_t))
+            # print(sp_in_t)
 
             adam_ser.write('#013\r'.encode())     # reads sphere outlet temp
             time.sleep(0.03)
             sp_out_t = adam_ser.read(1)
             sp_out_t += adam_ser.read(adam_ser.inWaiting())
 
+            # print(type(sp_out_t))
+            # print(sp_out_t)
+
             adam_ser.write('#014\r'.encode())     # reads the heater temperature
             time.sleep(0.03)
             heat_t = adam_ser.read(1)
             heat_t += adam_ser.read(adam_ser.inWaiting())
 
-            data_control_log_array[4] = float(sp_in_t.decode().strip('>+\r'))
-            data_control_log_array[7] = float(sp_out_t.decode().strip('>+\r'))
-            data_control_log_array[2] = float(heat_t.decode().strip('>+\r'))
+            sp_in_t = sp_in_t.decode().splitlines()[-1].strip('>+\r')
+            sp_out_t = sp_out_t.decode().splitlines()[-1].strip('>+\r')
+            heat_t = heat_t.decode().splitlines()[-1].strip('>+\r')
+
+            data_control_log_array[4] = float(sp_in_t)
+            data_control_log_array[7] = float(sp_out_t)
+            data_control_log_array[2] = float(heat_t)
         # Maple
         if devices_connect[2]:
             maple_data = maple_ser.read(1)
@@ -531,7 +541,7 @@ def update_progress():
         height_array.append(float(line.split()[1]))
 
         if lines > 0 and progress_data[0] == 0:  # checking if starting time was not defined yet
-            if height_array[lines] > 1 + height_array[lines - 1]:
+            if height_array[lines] < 1 + height_array[lines - 1]:
                 print('found the beginning, ' + str(ssm_array[lines - 1]))
                 progress_data[0] = ssm_array[lines - 1]
                 progress_data[1] = height_array[lines - 1]
@@ -568,7 +578,7 @@ def progress_page():
 
 def make_modbus_connection():
     mobucon = ModbusClient(
-        port='/dev/ttyS0',
+        port='/dev/ttyS0',   # '/dev/ttyS0'
         stopbits=1,
         bytesize=8,
         parity='N',

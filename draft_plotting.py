@@ -4,7 +4,6 @@ import formulas
 import time
 
 
-
 def infinite_update_plots():
     pos_log_file = 0
     pos_control_file = 0
@@ -109,9 +108,13 @@ def infinite_update_plots():
         temperature2 = [log_line[14] if log_line[14] > 0 else None for log_line in log_data]
         temperature3 = [log_line[15] if log_line[15] > 0 else None for log_line in log_data]
         temperature4 = [log_line[16] if log_line[16] > 0 else None for log_line in log_data]
-        temperature5 = [formulas.temperature_volt(log_line[4], log_line[5]) if log_line[4] > 0 else None for log_line in
+        temperature5 = [formulas.temperature_volt(log_line[4], log_line[5]) if
+                        log_line[4] > 0 and formulas.temperature_volt(log_line[4], log_line[5]) < 200 else None
+                        for log_line in
                         log_data]
-        temperature6 = [formulas.temperature_volt(log_line[1], log_line[5]) if log_line[1] > 0 else None for log_line in
+        temperature6 = [formulas.temperature_volt(log_line[1], log_line[5]) if
+                        log_line[1] > 0 and formulas.temperature_volt(log_line[1], log_line[5]) < 200
+                        else None for log_line in
                         log_data]
 
         plt.plot(time_array, temperature1)
@@ -119,12 +122,12 @@ def infinite_update_plots():
         plt.plot(time_array, temperature3)
         plt.plot(time_array, temperature4)
         plt.plot(time_array, temperature5)
-        plt.plot(time_array, temperature6)
+        # plt.plot(time_array, temperature6)
 
         plt.title('All day temperature ' + current_time)
         plt.ylabel('Temperature, C')
         plt.xlabel('Time, SSM')
-        plt.legend(['Na port', 'Top 3M', 'Bottom 3M', 'Tank', '3M finger', 'Transfer line'])
+        plt.legend(['Na port', 'Tank west bottom ', 'Tank bottom port', 'Tank top east', '3M finger', 'Transfer line'])
         plt.savefig('static/temperature_all.png')
         plt.close()
 
@@ -134,44 +137,43 @@ def infinite_update_plots():
         plt.plot(time_array[-200:], temperature3[-200:])
         plt.plot(time_array[-200:], temperature4[-200:])
         plt.plot(time_array[-200:], temperature5[-200:])
-        plt.plot(time_array[-200:], temperature6[-200:])
+        # plt.plot(time_array[-200:], temperature6[-200:])
 
         plt.title('Recent temperature ' + current_time)
         plt.ylabel('Temperature, C')
         plt.xlabel('Time, SSM')
-        plt.legend(['Na port', 'Top 3M', 'Bottom 3M', 'Tank', '3M finger', 'Transfer line'])
+        plt.legend(['Na port', 'Tank west bottom ', 'Tank bottom port', 'Tank top east', '3M finger', 'Transfer line'])
         plt.savefig('static/temperature_recent.png')
         plt.close()
 
-
         # adding control log plots
+
         temperature_in = [ctr_log_line[5] if ctr_log_line[5] > 0 else None for ctr_log_line in control_log_data]
         temperature_out = [ctr_log_line[8] if ctr_log_line[8] > 0 else None for ctr_log_line in control_log_data]
-        temperature_na = [ctr_log_line[2] if ctr_log_line[2] > 0 else None for ctr_log_line in control_log_data]
+        temperature_ta = [ctr_log_line[11] if ctr_log_line[11] > 0 else None for ctr_log_line in control_log_data]
         heater_power = [ctr_log_line[4] if ctr_log_line[4] >= 0 else None for ctr_log_line in control_log_data]
 
         plt.plot(time_control_array, temperature_in)
         plt.plot(time_control_array, temperature_out)
-        plt.plot(time_control_array, temperature_na)
+        plt.plot(time_array, temperature3)
         plt.plot(time_control_array, heater_power)
 
-        plt.title('All day power, heater and 3m shell temperature ' + current_time)
+        plt.title('All day power, heater and tank bottom port temperature ' + current_time)
         plt.ylabel('Temperature, C')
         plt.xlabel('Time, SSM')
-        plt.legend(['T oil in, C', 'T oil out, C', 'T 3M shell up, C', 'Heater power, %'])
+        plt.legend(['T oil in, C', 'T oil out, C', 'T tank bottom port, C', 'Heater power, %'])
         plt.savefig('static/temperature_heater.png')
         plt.close()
 
+        plt.plot(time_control_array[-600 * 3:], temperature_in[-600 * 3:])
+        plt.plot(time_control_array[-600 * 3:], temperature_out[-600 * 3:])
+        plt.plot(time_array[-600 * 3:], temperature3[-600 * 3:])
+        plt.plot(time_control_array[-600 * 3:], heater_power[-600 * 3:])
 
-        plt.plot(time_control_array[-600*3:], temperature_in[-600*3:])
-        plt.plot(time_control_array[-600*3:], temperature_out[-600*3:])
-        plt.plot(time_control_array[-600*3:], temperature_na[-600*3:])
-        plt.plot(time_control_array[-600*3:], heater_power[-600*3:])
-
-        plt.title('Last ten minutes power, heater and 3m shell temperature ' + current_time)
+        plt.title('Last ten minutes power, heater and tank bottom port temperature ' + current_time)
         plt.ylabel('Temperature, C')
         plt.xlabel('Time, SSM')
-        plt.legend(['T oil in, C', 'T oil out, C', 'T 3M shell up, C', 'Heater power, %'])
+        plt.legend(['T oil in, C', 'T oil out, C', 'T tank bottom port, C', 'Heater power, %'])
         plt.savefig('static/temperature_heater_recent.png')
         plt.close()
 
@@ -179,6 +181,4 @@ def infinite_update_plots():
 
 
 if __name__ == '__main__':
-
     infinite_update_plots()
-

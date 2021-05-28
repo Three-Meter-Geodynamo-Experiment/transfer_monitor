@@ -1,0 +1,200 @@
+<html>
+    <meta http-equiv="refresh" content="3" />
+    <style>
+        .container {
+          position: relative;
+          text-align: left;
+          color: black;
+          font-size: 60;
+          top: 0;
+          left: 0;
+        }
+
+        .progress {
+          position: relative;
+          top: 0;
+          left: 0;
+        }
+
+        .temperature1 {
+          position: absolute;
+          top: 230px;
+          left: 120px;
+
+        }
+
+        .temperature2 {
+          position: absolute;
+          top: 790px;
+          left: 700px;
+        }
+
+        .temperature3 {
+          position: absolute;
+          top: 770px;
+          left: 1070px;
+        }
+
+        .temperature4 {
+          position: absolute;
+          top: 145px;
+          left: 430px;
+        }
+
+        .temperature5 {
+          position: absolute;
+          top: 170px;
+          left: 660px;
+        }
+
+        .temperature6 {
+          position: absolute;
+          top: 312px;
+          left: 822px;
+        }
+
+        .temperature7 {
+          position: absolute;
+          top: 350px;
+          left: 1210px;
+        }
+
+        .temperature8 {
+          position: absolute;
+          top: 510px;
+          left: 1160px;
+        }
+        .pressure1 {
+          position:absolute;
+          top: 550px;
+          left: 145px;
+        }
+        .pressure2 {
+          position: absolute;
+          top: 504px;
+          left: 900px;
+        }
+        .pressure3 {
+          position: absolute;
+          top: 574px;
+          left: 900px;
+        }
+        .pressure4 {
+          position: absolute;
+          top: 620px;
+          left: 145px;
+        }
+
+        .txt1 {
+          position: absolute;
+          top: 1px;
+          left: 10px;
+          font-size: 50;
+        }
+
+        .txt2 {
+          position: absolute;
+          top: 1px;
+          left: 380px;
+          font-size: 50;
+          }
+
+        .txt3 {
+          position: absolute;
+          top: 20px;
+          left: 805px;
+          font-size: 80;
+          color:red;
+          }
+        .txt4 {
+          position: absolute;
+          top: 10px;
+          left: 1050px;
+          font-size: 50;
+
+          }
+        .txt5 {
+          position: absolute;
+          top: 70px;
+          left: 1050px;
+          font-size: 50;
+
+          }
+        .txt6 {
+          position: absolute;
+          top: 70px;
+          left: 10px;
+          font-size: 50;
+
+          }
+        .txt7 {
+          position: absolute;
+          top: 70px;
+          left: 380px;
+          font-size: 50;
+
+          }
+
+        .txt10 {
+          position: absolute;
+          top: 70px;
+          left: 990px;
+          font-size: 50;
+          }
+
+
+        </style>
+    <head>
+        <title>{{ title }} - Sodium transfer monitor</title>
+        <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+    </head>
+    <body>
+<!--        <h3>Arduino 1 temperatures, {{ user.ard_temp }}</h3>-->
+<!--        <h3>Arduino 2 pressures, {{ user.ard2_pres }}</h3>-->
+<!--        <h3>Wireless temperatures, {{ user.wrl_temp }}</h3>-->
+<!--        <h3>Current time: {{ time_data.current_time }}, Time since started: {{time_data.since_started }}</h3>-->
+<!--        <h3> Pressure drop: {{pressures.P1 - pressures.P3}}</h3>-->
+<!--        <h3> {{progress}}</h3>-->
+<!--        <h3> {{time_data}} </h3>-->
+        <div class="container">
+
+            <img src="static/sodium_transfer2.png" alt="Na"  style="width:1368; margin: 220px 0px;"/>
+<!--            <img src="static/progress.png" style="position: relative; width: "/>-->
+            <div class="temperature1">T<sub>1</sub>={{ temperatures.T1}} </div>
+            <div class="temperature2">T<sub>2</sub>={{ temperatures.T2}}</div>
+            <div class="temperature3">T<sub>3</sub>={{ temperatures.T3}}</div>
+            <div class="temperature4">T<sub>4</sub>={{ temperatures.T4}}</div>
+            <div class="temperature5">T<sub>5</sub>={{ temperatures.T5}}</div>
+            <div class="temperature6">T<sub>6</sub>={{ temperatures.T6}}</div>
+            <div class="temperature7">T<sub>7</sub>={{ temperatures.T7}}</div>
+            <div class="temperature8">T<sub>8</sub>={{ temperatures.T8}}</div>
+<!--            <div class="temperature8">T8={{ temperatures.T8}}</div>-->
+
+            <div class="pressure1">P<sub>1</sub>={{pressures.P1}}</div>
+            <div class="pressure2">P<sub>2</sub>={{pressures.P2}}</div>
+            <div class="pressure3">P<sub>3</sub>={{pressures.P3}}</div>
+            <div class="pressure4">P<sub>4</sub>={{pressures.P4}}</div>
+
+
+            <div class="txt1">  {{ time_data.current_time }} </div>
+            <div class="txt2">  Elapsed {{time_data.since_started }} </div>
+            <div class="txt3">  {{progress.percents_done}}% </div>
+            <div class="txt4">  Δp={{pressures.diff}}&nbsp;psi </div>
+            <div class="txt5">  Flow={{progress.current_flux }}&nbsp;L/s </div>
+            <div class="txt6">  ETA {{progress.eta }} </div>
+            <div class="txt7">  Updated {{time_data.since_updated }}&nbsp;s</div>
+<!--            <div class="txt8">  {{time_data.since_started }} </div>-->
+<!--            <div class="txt9">  {{time_data.since_started }} </div>-->
+<!--            <div class="txt10">  F_av={{progress.average_flux }}L/s </div>-->
+        </div>
+<a href="debug"> Error codes </a> <br>
+<a href="input"> Input form </a> <br>
+<a href="/"> Main page </a> | | <a href="plot_pressure"> Pressure plots </a>  | | <a href="plot_temperature"> Temperature plots </a>
+ | | <a href="plot_recent"> Recent plots </a> | | <a href="input"> Input </a> | | <a href="heater"> Heater </a> <br>
+
+
+</body>
+
+
+</html>
